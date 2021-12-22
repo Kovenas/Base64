@@ -23,4 +23,8 @@ namespace Base64
 	std::string Encode(std::string_view BufferToEncode);
 
 	std::string Decode(std::string_view BufferToDecode);
+
+	// Decodes Buffer and modifies it on the fly
+	// Doesn't allocate memory
+	void DecodeRef(std::string& BufferToDecode);
 }
