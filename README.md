@@ -23,6 +23,14 @@ EXPECT_EQ(Output1, ExpectedOutput);
 EXPECT_EQ(Output2, ExpectedOutput);
 ```
 
+Decoding and writing to the same buffer without allocating more memory
+
+```cpp
+std::string Data = "TWFueSBoYW5kcw==";
+Base64::DecodeRef(Data);
+EXPECT_EQ(Data, "Many hands");
+```
+
 # Tests
 
 Tests for these functions exists in other my project, but if you need them please create an issue or contact me and I will add them.
