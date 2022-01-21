@@ -27,7 +27,7 @@ Decoding and writing to the same buffer without allocating more memory
 
 ```cpp
 std::string Data = "TWFueSBoYW5kcw==";
-Base64::DecodeRef(Data);
+Base64::DecodeInPlace(Data);
 EXPECT_EQ(Data, "Many hands");
 ```
 

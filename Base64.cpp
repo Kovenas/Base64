@@ -110,6 +110,75 @@ constexpr auto GetIndexTable()
 
 constexpr auto DecodingTable = GetIndexTable();
 
+static size_t DecodeBase(const uint8_t* BufferBegin, const uint8_t* BufferEnd, size_t SizeMod, size_t OutputSize, uint8_t* OutputDataIt)
+{
+	const auto LoopEnd = BufferEnd - 4;
+	auto It = BufferBegin;
+	for (; It < LoopEnd; ++It)
+	{
+		uint8_t Index = DecodingTable[*It];
+		uint8_t Character = Index << 2;
+		Index = DecodingTable[*++It];
+		Character |= Index >> 4;
+		*OutputDataIt++ = Character;
+
+		Character = Index << 4;
+		Index = DecodingTable[*++It];
+		Character |= Index >> 2;
+		*OutputDataIt++ = Character;
+
+		Character = Index << 6;
+		Index = DecodingTable[*++It];
+		Character |= Index;
+		*OutputDataIt++ = Character;
+	}
+
+	if (It < BufferEnd)
+	{
+		uint8_t Index = DecodingTable[*It];
+		uint8_t Character = Index << 2;
+		Index = DecodingTable[*++It];
+		Character |= Index >> 4;
+		*OutputDataIt++ = Character;
+
+		size_t ResizedLenght = OutputSize;
+
+		if (!((It + 1) < BufferEnd && *(It + 1) == PaddingSymbol))
+		{
+			Character = Index << 4;
+			Index = DecodingTable[*++It];
+			Character |= Index >> 2;
+			*OutputDataIt++ = Character;
+
+			if (!((It + 1) < BufferEnd && *(It + 1) == PaddingSymbol))
+			{
+				Character = Index << 6;
+				Index = DecodingTable[*++It];
+				Character |= Index;
+				*OutputDataIt++ = Character;
+			}
+			else
+			{
+				ResizedLenght = OutputSize - 1;
+			}
+		}
+		else
+		{
+			ResizedLenght = OutputSize - 2;
+		}
+
+		if (SizeMod)
+		{
+			ResizedLenght = OutputSize - (3 - SizeMod);
+		}
+		return ResizedLenght;
+	}
+	else
+	{
+		return OutputSize;
+	}
+}
+
 std::string Base64::Decode(std::string_view BufferToDecode)
 {
 	const size_t BufferSize = BufferToDecode.size();
@@ -117,150 +186,27 @@ std::string Base64::Decode(std::string_view BufferToDecode)
 	const size_t OutputSize = (BufferSize / 4) * 3 + (SizeMod ? 2 : 0);
 
 	std::string OutputData(OutputSize, 0);
-	auto OutputDataIt = OutputData.data();
+	auto OutputDataIt = reinterpret_cast<uint8_t*>(OutputData.data());
 
-	const auto LoopBegin = reinterpret_cast<const uint8_t*>(BufferToDecode.data());
+	const auto BufferBegin = reinterpret_cast<const uint8_t*>(BufferToDecode.data());
 	const auto BufferEnd = reinterpret_cast<const uint8_t*>(BufferToDecode.data() + BufferSize);
-	const auto LoopEnd = BufferEnd - 4;
 
-	auto It = LoopBegin;
-	for (; It < LoopEnd; ++It)
-	{
-		uint8_t Index = DecodingTable[*It];
-		uint8_t Character = Index << 2;
-		Index = DecodingTable[*++It];
-		Character |= Index >> 4;
-		*OutputDataIt++ = Character;
-
-		Character = Index << 4;
-		Index = DecodingTable[*++It];
-		Character |= Index >> 2;
-		*OutputDataIt++ = Character;
-
-		Character = Index << 6;
-		Index = DecodingTable[*++It];
-		Character |= Index;
-		*OutputDataIt++ = Character;
-	}
-
-	if (It < BufferEnd)
-	{
-		uint8_t Index = DecodingTable[*It];
-		uint8_t Character = Index << 2;
-		Index = DecodingTable[*++It];
-		Character |= Index >> 4;
-		*OutputDataIt++ = Character;
-
-		size_t ResizedLenght = OutputSize;
-
-		if (!((It + 1) < BufferEnd && *(It + 1) == PaddingSymbol))
-		{
-			Character = Index << 4;
-			Index = DecodingTable[*++It];
-			Character |= Index >> 2;
-			*OutputDataIt++ = Character;
-
-			if (!((It + 1) < BufferEnd && *(It + 1) == PaddingSymbol))
-			{
-				Character = Index << 6;
-				Index = DecodingTable[*++It];
-				Character |= Index;
-				*OutputDataIt++ = Character;
-			}
-			else
-			{
-				ResizedLenght = OutputSize - 1;
-			}
-		}
-		else
-		{
-			ResizedLenght = OutputSize - 2;
-		}
-
-		if (SizeMod)
-		{
-			ResizedLenght = OutputSize - (3 - SizeMod);
-		}
-		OutputData.resize(ResizedLenght);
-	}
-
+	size_t FinalSize = DecodeBase(BufferBegin, BufferEnd, SizeMod, OutputSize, OutputDataIt);
+	OutputData.resize(FinalSize);
 	return OutputData;
 }
 
-void Base64::DecodeRef(std::string& BufferToDecode)
+void Base64::DecodeInPlace(std::string& BufferToDecode)
 {
 	const size_t BufferSize = BufferToDecode.size();
 	const size_t SizeMod = BufferSize % 4;
 	const size_t OutputSize = (BufferSize / 4) * 3 + (SizeMod ? 2 : 0);
 
-	auto OutputDataIt = BufferToDecode.data();
+	auto OutputDataIt = reinterpret_cast<uint8_t*>(BufferToDecode.data());
 
-	const auto LoopBegin = reinterpret_cast<const uint8_t*>(BufferToDecode.data());
+	const auto BufferBegin = reinterpret_cast<const uint8_t*>(BufferToDecode.data());
 	const auto BufferEnd = reinterpret_cast<const uint8_t*>(BufferToDecode.data() + BufferSize);
-	const auto LoopEnd = BufferEnd - 4;
 
-	auto It = LoopBegin;
-	for (; It < LoopEnd; ++It)
-	{
-		uint8_t Index = DecodingTable[*It];
-		uint8_t Character = Index << 2;
-		Index = DecodingTable[*++It];
-		Character |= Index >> 4;
-		*OutputDataIt++ = Character;
-
-		Character = Index << 4;
-		Index = DecodingTable[*++It];
-		Character |= Index >> 2;
-		*OutputDataIt++ = Character;
-
-		Character = Index << 6;
-		Index = DecodingTable[*++It];
-		Character |= Index;
-		*OutputDataIt++ = Character;
-	}
-
-	if (It < BufferEnd)
-	{
-		uint8_t Index = DecodingTable[*It];
-		uint8_t Character = Index << 2;
-		Index = DecodingTable[*++It];
-		Character |= Index >> 4;
-		*OutputDataIt++ = Character;
-
-		size_t ResizedLenght = OutputSize;
-
-		if (!((It + 1) < BufferEnd && *(It + 1) == PaddingSymbol))
-		{
-			Character = Index << 4;
-			Index = DecodingTable[*++It];
-			Character |= Index >> 2;
-			*OutputDataIt++ = Character;
-
-			if (!((It + 1) < BufferEnd && *(It + 1) == PaddingSymbol))
-			{
-				Character = Index << 6;
-				Index = DecodingTable[*++It];
-				Character |= Index;
-				*OutputDataIt++ = Character;
-			}
-			else
-			{
-				ResizedLenght = OutputSize - 1;
-			}
-		}
-		else
-		{
-			ResizedLenght = OutputSize - 2;
-		}
-
-		if (SizeMod)
-		{
-			ResizedLenght = OutputSize - (3 - SizeMod);
-		}
-		BufferToDecode.resize(ResizedLenght);
-	}
-	else
-	{
-		BufferToDecode.resize(OutputSize);
-	}
+	size_t FinalSize = DecodeBase(BufferBegin, BufferEnd, SizeMod, OutputSize, OutputDataIt);
+	BufferToDecode.resize(FinalSize);
 }

@@ -12,7 +12,8 @@ namespace Base64
 
 	std::string Decode(std::string_view BufferToDecode);
 
-	// Decodes Buffer and modifies it on the fly
-	// Doesn't allocate memory
-	void DecodeRef(std::string& BufferToDecode);
+	// Decoding and writing output to the same buffer.
+	// Decoded data always takes less memory, so calling std::string::resize
+	// the buffer shouldn't be reallocated (depends on std::string::resize implementation).
+	void DecodeInPlace(std::string& Buffer);
 }
