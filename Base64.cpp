@@ -36,32 +36,36 @@ std::string Base64::Encode(std::string_view BufferToEncode)
 	auto It = LoopBegin;
 	for (; It < LoopEnd; ++It)
 	{
-		uint8_t Index = *It >> 2;
+		uint8_t Byte = *It;
+		uint8_t Index = Byte >> 2;
 		uint8_t Character = EncodingTable[Index];
 		*OutputBufferIt++ = Character;
 
-		Index = (*It & 0x03) << 4;
-		Index |= *++It >> 4;
+		Index = (Byte & 0x03) << 4;
+		Byte = *++It;
+		Index |= Byte >> 4;
 		Character = EncodingTable[Index];
 		*OutputBufferIt++ = Character;
 
-		Index = (*It & 0x0F) << 2;
-		Index |= *++It >> 6;
+		Index = (Byte & 0x0F) << 2;
+		Byte = *++It;
+		Index |= Byte >> 6;
 		Character = EncodingTable[Index];
 		*OutputBufferIt++ = Character;
 
-		Index = *It & 0x3F;
+		Index = Byte & 0x3F;
 		Character = EncodingTable[Index];
 		*OutputBufferIt++ = Character;
 	}
 
 	if (SizeMod == 1)
 	{
-		uint8_t Index = *It >> 2;
+		uint8_t Byte = *It;
+		uint8_t Index = Byte >> 2;
 		uint8_t Character = EncodingTable[Index];
 		*OutputBufferIt++ = Character;
 
-		Index = (*It & 0x03) << 4;
+		Index = (Byte & 0x03) << 4;
 		Character = EncodingTable[Index];
 		*OutputBufferIt++ = Character;
 
@@ -70,16 +74,18 @@ std::string Base64::Encode(std::string_view BufferToEncode)
 	}
 	else if (SizeMod == 2)
 	{
-		uint8_t Index = *It >> 2;
+		uint8_t Byte = *It;
+		uint8_t Index = Byte >> 2;
 		uint8_t Character = EncodingTable[Index];
 		*OutputBufferIt++ = Character;
 
-		Index = (*It & 0x03) << 4;
-		Index |= *++It >> 4;
+		Index = (Byte & 0x03) << 4;
+		Byte = *++It;
+		Index |= Byte >> 4;
 		Character = EncodingTable[Index];
 		*OutputBufferIt++ = Character;
 
-		Index = (*It & 0x0F) << 2;
+		Index = (Byte & 0x0F) << 2;
 		Character = EncodingTable[Index];
 		*OutputBufferIt++ = Character;
 
