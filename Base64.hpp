@@ -4,21 +4,9 @@
 
 namespace Base64
 {
-	constexpr auto GetEncodedDataSize(size_t BufferSize)
-	{
-		size_t Mod = BufferSize % 3;
-		size_t Size = (BufferSize / 3) * 4;
-		Size += Mod ? 4 : 0; // Include padding symbols
-		return Size;
-	}
+	size_t GetEncodedBufferSize(size_t BufferSize);
 
-	constexpr auto GetDecodedDataSize(size_t EncodedBufferSize)
-	{
-		size_t Mod = EncodedBufferSize % 4;
-		size_t Size = (EncodedBufferSize / 4) * 3;
-		Size += Mod ? 2 : 0; // Include last chars
-		return Size;
-	}
+	size_t GetDecodedBufferSize(size_t BufferSize);
 
 	std::string Encode(std::string_view BufferToEncode);
 
