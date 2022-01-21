@@ -23,7 +23,7 @@ EXPECT_EQ(Output1, ExpectedOutput);
 EXPECT_EQ(Output2, ExpectedOutput);
 ```
 
-Decoding and writing to the same buffer without allocating more memory
+Decoding and writing output to the same buffer:
 
 ```cpp
 std::string Data = "TWFueSBoYW5kcw==";
